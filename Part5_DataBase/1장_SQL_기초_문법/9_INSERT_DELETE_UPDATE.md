@@ -46,4 +46,9 @@ WHERE teamID = 'KOR';
 
 DELETE FROM salaries
 WHERE yearID = 2021; 
+
+-- DELETE vs UPDATE
+-- 물리삭제 vs 논리삭제 
+-- DELETE라는 열을 둔다음에 UPDATE를 사용해서 딜리트 플래그만 1로 바꿔치기해주는 경우도 많다.
+
 ```
