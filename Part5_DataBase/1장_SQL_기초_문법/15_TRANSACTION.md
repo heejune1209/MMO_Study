@@ -14,7 +14,7 @@ DELETE accounts;
 -- COMMIT;
 -- ROLLBACK;
 
--- 메일 BEGIN TRAN
+-- 메일 작성 : BEGIN TRAN
 	-- 보낼 것인가 COMMIT
 	-- 취소할 것인가 ROLLBACK
 
@@ -81,6 +81,7 @@ BEGIN TRAN
 		INSERT INTO accounts VALUES(1, 'rookiss1', 100, GETUTCDATE())
 
 ROLLBACK;
+
 ```
 
 실험
