@@ -80,6 +80,6 @@ WHERE EXISTS (SELECT playerID FROM battingpost WHERE players.playerID = battingp
 -- EXISTS이 IN보다 확장성 높게 사용가능
 
 -- 그리고 원하는 부분을 드래그해서 Ctrl + L을 누르면 
-![Image](https://github.com/user-attachments/assets/75bdc69b-6ea5-40bd-9383-6be396dad72a)
 -- sql 서버가 어떤식으로 실행할지 실행 계획을 보여준다
 ```
+![Image](https://github.com/user-attachments/assets/75bdc69b-6ea5-40bd-9383-6be396dad72a)
