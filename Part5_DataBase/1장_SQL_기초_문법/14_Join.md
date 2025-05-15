@@ -30,12 +30,16 @@ INSERT INTO testB VALUES('B');
 INSERT INTO testB VALUES('C');
 
 -- CROSS JOIN (교차 결합)
+-- CROSS JOIN은 테이블 A에 m개의 행, 테이블 B에 n개의 행이 있을 때, CROSS JOIN 결과는 m × n개의 행을 생성합니다.
+-- 조건 절(ON, USING, WHERE) 없이 모든 조합을 반환
+-- 조인된 결과가 매우 커질 수 있으므로 주의 필요
 SELECT *
 FROM testA
 		CROSS JOIN testB
 
 SELECT *
 FROM testA,testB;
+
 ```
 
 - 교차 결합 결과

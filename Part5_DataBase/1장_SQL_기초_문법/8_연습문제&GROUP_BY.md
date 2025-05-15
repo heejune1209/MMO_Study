@@ -79,6 +79,8 @@ HAVING SUM(HR) >= 200 -- WHERE랑 굉장히 비슷한 느낌이지만 그룹핑�
 ORDER BY homeruns DESC;
 
 -- GROUP BY를 한 애들은 SELECT문에도 똑같이 그대로 올려서 사용을 할 수 있다
+-- 왜냐면 논리적인 순서에 의해서 GROUP BY가 먼저 실행되기 때문에 그렇다.
+-- 그래서 SELECT에서 별칭을 붙인 homeruns을 ORDER BY을 사용할 수 있는 이유가 이에 비롯된다.
 
 -- 논리적인 순서(실행 순서)
 -- FROM  책상에서

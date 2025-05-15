@@ -25,6 +25,8 @@ AS ⇒ nameFirst의 별명
 
 WHERE ⇒ 조건(if 문)
 
+FROM (테이블명)
+
 - = 동일
 - ! = 다름
 
@@ -95,7 +97,7 @@ Table Design에 들어가면 해당 여부를 체크 할 수 있다.
 ```sql
 SELECT nameFirst, nameLast, birthYear, birthCountry
 FROM players
-WHERE deathYear IS NULL;
+WHERE deathYear IS NULL; -- 조건: deathYear가 NULL인 사람
 ```
 
 NULL 값 체크 ⇒ IS, IS NOT

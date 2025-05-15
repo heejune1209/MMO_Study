@@ -16,6 +16,9 @@ SELECT *
 FROM players
 WHERE playerID = 'rodrial01'
 
+DELETE FROM salaries
+WHERE playerID LIKE 'rookiss%';
+
 -- 이것을 한번에 하려면?
 -- 단일행 서브쿼리
 SELECT *
@@ -40,11 +43,20 @@ SELECT *
 FROM salaries
 ORDER BY yearID DESC;
 
--- INSERT INTO
+-- INSERT INTO … VALUES : 고정된(리터럴) 값을 직접 지정하여 한 번에 한 개 또는 여러 개의 행을 삽입할 때 사용.
+-- INSERT INTO 테이블명 (컬럼1, 컬럼2, …)
+--VALUES
+--  (값1, 값2, …),   -- 첫 번째 행
+--  (값A, 값B, …),   -- 두 번째 행 (여러 행 삽입 시)
+--  …;
 INSERT INTO salaries
 VALUES (2020, 'KOR', 'NL', 'rookiss', (SELECT MAX(salary) FROM salaries))
 
--- INSERT SELECT 
+-- INSERT INTO … SELECT : 다른 테이블이나 쿼리 결과로부터 여러 행을 한 번에 복사하여 삽입할 때 사용.
+--INSERT INTO 대상테이블 (컬럼1, 컬럼2, …)
+--SELECT 표현식1, 표현식2, …
+--FROM 원본테이블
+--WHERE 조건;
 INSERT INTO salaries
 SELECT 2020, 'KOR', 'NL', 'rookiss2', (SELECT MAX(salary) FROM salaries);
 
