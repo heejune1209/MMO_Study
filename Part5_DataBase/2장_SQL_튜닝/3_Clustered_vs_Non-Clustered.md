@@ -125,3 +125,48 @@ DBCC IND('Northwind', 'TestOrderDetails', 1/*index_id*/);
 |**Clustered Index**          |Clustered Leaf 페이지    |—                  |1단계             |
 |**Non-Clustered (클러스터 無)**|Heap Table               |Heap RID           |2단계             |
 |**Non-Clustered (클러스터 有)**|Clustered Leaf 페이지    |클러스터드 키      |2단계             |
+
+# Clustered vs Non-Clustered 인덱스 사고 흐름 정립용 키워드
+
+1. **저장 위치**  
+   - Clustered → **Leaf = Data Page**  
+   - Non-Clustered (無) → **Heap Table**  
+   - Non-Clustered (有) → **Clustered Leaf**
+
+2. **포인터 타입**  
+   - Clustered → — (직접 데이터)  
+   - Non-Clustered (無) → **Heap RID**  
+   - Non-Clustered (有) → **Clustered Key**
+
+3. **B-Tree 탐색 단계**  
+   1. Non-Clustered (無):  
+      - 1) Non-Clustered B-Tree → **Heap RID** 획득  
+      - 2) **Random Access** → Heap에서 데이터 조회  
+   2. Non-Clustered (有):  
+      - 1) Non-Clustered B-Tree → **Clustered Key** 획득  
+      - 2) Clustered B-Tree → 데이터 페이지 조회  
+   3. Clustered:  
+      - 1) Clustered B-Tree → **Data Page** 바로 읽기  
+
+4. **인덱스 변경 영향**  
+   - **Clustered 추가** → 물리 정렬 변경 → PageID/PID 재배치  
+   - → Non-Clustered 인덱스도 **PageID**, **RID** 구조 변화  
+
+5. **특수 키워드**  
+   - **FILLFACTOR**, **PAD_INDEX** (공간 관리)  
+   - **DBCC IND** (메타데이터)  
+   - **DBCC PAGE** (페이지 세부)  
+   - **UNIQUIFIER** (동일 키 구분자)  
+
+---
+
+## 머릿속 흐름 연결 예시
+
+1. “데이터는 어디에 있나?” → **Leaf=Data / Heap / Clustered Leaf**  
+2. “인덱스 리프가 무엇을 저장하나?” → **Heap RID vs Clustered Key**  
+3. “검색 시 몇 단계를 거치나?” → **1단계(Clustered) vs 2단계(Non-Clustered)**  
+4. “Clustered 추가 시 무슨 일이?” → **정렬 이동 → PageID/RID 재배치**  
+5. “공간·메타·세부는?” → **FILLFACTOR, PAD_INDEX, DBCC IND, DBCC PAGE**
+
+각 단계마다 위 **키워드**를 떠올리며, “저장 위치 → 포인터 → 탐색 단계 → 변경 영향 → 관리 옵션” 순으로 머릿속에 그려보세요.
+
