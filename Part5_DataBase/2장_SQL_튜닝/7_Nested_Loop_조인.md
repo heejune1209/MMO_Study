@@ -30,7 +30,10 @@ class Program
         {
             if (rand.Next(0,2) == 0)
                 continue;
-            players.Add(new Player() { playerId = 1} );
+            players.Add(new Player() { playerId = 1} ); // 인라인으로 바로 생성해서 리스트에 추가
+            // 참고로 Player player = new Player { playerId = 1 };
+            // players.Add(player); 이렇게 해야하는게 아닌가 생각이 들수 있지만 이 경우는 명시적으로 변수(player)를 쓴 것뿐
+            // new Player() 만으로도 객체를 생성할 수 있고, 별도의 변수 선언 없이 바로 players.Add(...)에 전달해도 전혀 문제없다.
         }
 
         // N
