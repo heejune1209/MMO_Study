@@ -148,3 +148,46 @@ NL의 특징
 INNER 테이블에 인덱스가 없으면 노답이다.
 
 부분 범위 처리에 좋다.
+
+# Nested Loop 조인 핵심 요약
+
+## 1. 개념
+- **Nested Loop(중첩 루프)**:  
+  OUTER 테이블의 각 행을 순회하며, INNER 테이블에 조건 매칭 탐색 수행  
+- **OUTER 테이블**: 루프의 바깥쪽, 먼저 순회되는 테이블  
+- **INNER 테이블**: 루프의 안쪽, OUTER의 각 행마다 인덱스를 통해 빠르게 조회되는 테이블  
+
+## 2. 동작 원리
+1. OUTER 테이블의 첫 번째 행 읽기  
+2. INNER 테이블에 해당 키로 **Index Seek**(랜덤 엑세스)  
+3. 매칭되면 결과 집계  
+4. 결과 개수 제한(예: TOP 5)이 있으면 조기 종료 가능  
+
+## 3. 성능 포인트
+- **INNER 테이블에 반드시 인덱스 필요**  
+- **부분 범위 (TOP N)** 처리에 최적  
+- **인덱스 없는 INNER** → 전형적 O(N²), 성능 저하  
+- **키 룩업(Key Lookup)**:  
+  Non-Clustered 인덱스 값으로 실제 데이터를 조회할 때 추가 비용 발생  
+
+## 4. SQL 예시
+```sql
+-- 기본 NL 조인 (TOP 5)
+SELECT TOP 5 *
+FROM players AS p
+INNER JOIN salaries AS s
+  ON p.playerID = s.playerID;
+
+-- 강제 순서 & 방식 지정
+SELECT TOP 5 *
+FROM players AS p
+INNER JOIN salaries AS s
+  ON p.playerID = s.playerID
+OPTION(FORCE ORDER, LOOP JOIN);
+```
+## 5. 결론
+- NL은 OUTER 순회 + INNER 인덱스 조회 구조
+- 부분 범위(TOP N) 쿼리에서 특히 유리
+- INNER에 인덱스 없이는 절대 사용 금지
+- 조인 순서 강제는 FORCE ORDER 옵션으로 가능
+  
