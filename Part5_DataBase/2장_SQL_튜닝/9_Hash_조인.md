@@ -123,7 +123,7 @@ FROM TestOrders AS o
 -- HASH
 -- HASH 테이블 생성 기준? => 작은 테이블 or 큰 테이블
 -- 작은 테이블!
--- 우선 Hash 테이블을 생성하는 부화도 만만치 않기 때문
+-- 우선 Hash 테이블을 생성하는 부하도 만만치 않기 때문
 SELECT *
 FROM TestOrders AS o
 		INNER JOIN TestCutomers AS c
