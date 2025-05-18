@@ -153,3 +153,50 @@ FROM schools AS s
 -- 3) Many-To-Many 보다는 One-To-Many 조인에 효과적 => One: outer쪽 정보
 		-- Join을 하는 조건에 Primary Key, UNIQUE Constraint가 붙었을 때 효과적
 ```
+# Merge(정렬 병합) 조인 핵심 요약
+
+## 1. 개념
+- **Merge 조인(Sort Merge)**  
+  - 양쪽 테이블을 **정렬(Sort)** 후, 두 커서를 이동하며 **병합(Merge)**  
+  - `IComparable` 인터페이스처럼 비교 로직에 따라 작동  
+
+## 2. 동작 단계
+1. **정렬 단계**  
+   - 양쪽 입력을 `O(N·logN)` 또는 `O(M·logM)`으로 정렬  
+   - 이미 정렬된 상태(클러스터드 인덱스)면 생략 가능  
+2. **병합 단계**  
+   - 두 리스트의 커서를 `O(N+M)`만큼 이동  
+   - `playerId`가 같으면 결과 추가, 작으면 작은 쪽 커서를 이동  
+
+## 3. 성능 포인트
+- **One-To-Many(1:N)**  
+  - OUTER 쪽이 고유(Primary Key/Unique)일 때 효율적  
+- **Many-To-Many(N:M)**  
+  - 중복 많으면 최악 **O(N·M)** → 성능 저하  
+- **정렬 비용**  
+  - 입력이 크면 **Hash Join** 고려  
+- **랜덤 액세스 최소화**  
+  - 키 룩업 없이 순차 스캔 위주  
+
+## 4. SQL 예시
+```sql
+USE BaseballData;
+SET STATISTICS IO, TIME, PROFILE ON;
+
+-- 기본 Merge 조인
+SELECT *
+FROM players AS p
+INNER JOIN salaries AS s
+  ON p.playerID = s.playerID;
+
+-- One-To-Many 조인 예시 (schools.pk = schoolsplayers.fk)
+SELECT *
+FROM schools AS s
+INNER JOIN schoolsplayers AS p
+  ON s.schoolID = p.schoolID;
+```
+## 결론
+- Merge 조인은 정렬(Sort) + 병합(Merge) 방식
+- One-To-Many 상황에서 최적, Many-To-Many일 때는 성능 저하
+- 클러스터드 인덱스로 미리 정렬된 테이블 활용 시 비용 절감
+- 대용량 정렬 비용이 크면 Hash Join 고려
