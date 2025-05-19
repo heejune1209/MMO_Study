@@ -2,6 +2,8 @@
 
 생각보다 매우 대단한(?) 작업이기 때문에 어떻게 동작하는지 간단하게 집고 넘어가보자
 
+![image](https://github.com/user-attachments/assets/8fadb234-75fd-4e56-948f-576158edbcb4)
+
 TRANSACTION의 ACID 특성
 
 1) A (Atomicity)
@@ -27,6 +29,10 @@ ALL or Nothing = 애매하게 반만 되는 경우는 없다.
 지속성
 
 장애가 발생하더라도 데이터는 반드시 복구 가능
+
+![image](https://github.com/user-attachments/assets/0cc2dfd0-b468-4ff5-96da-ef7b01c76ce2)
+만약에 플레이어 골드 감소까지 실제로 데이터가 적용을 했으면 Undo로그가 있을거니까 과거로 돌아갈수 있는 방법이 기록되어있으니까 
+그다음에 아이템을 인벤토리에 추가가 실패했다고 하면은 Undo를 해서 과거상태로 돌이킬 수 있게 된다는 얘기 
 
 결론
 
