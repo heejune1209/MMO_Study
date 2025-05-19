@@ -138,9 +138,9 @@ ORDER BY name;
 
 ## 3. 비용(Statistics & Cost) 이해
 - 논리적 읽기(Logical Reads)
-  - 읽은 페이지 수. Scan은 전체 페이지, Seek는 결과+키룩업만.
-  - 물리적 읽기(Physical Reads)
-  - 메모리에 없는 페이지를 디스크에서 읽을 때.
+  - 읽은 메모리 페이지 수. Scan은 전체 페이지, Seek는 결과+키룩업만.
+- 물리적 읽기(Physical Reads)
+  - 메모리에 없는 페이지를 디스크에서 읽을 때.(디스크에서 읽은 페이지 수)
 - CPU 시간
   - Scan은 순차 처리지만, Seek+Key Lookup은 랜덤 I/O로 오버헤드 존재.
 - 비용 모델
