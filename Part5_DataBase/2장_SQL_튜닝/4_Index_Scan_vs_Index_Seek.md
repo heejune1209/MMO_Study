@@ -105,41 +105,12 @@ ORDER BY name;
 
 ![image](https://user-images.githubusercontent.com/75019048/138374107-446958e2-1dae-4e8f-8b36-4d52a8847f46.png)
 
-# Index Access: Scan vs Seek 사고 흐름 정립용 키워드
+# Index Scan vs Index Seek의 핵심 개념과 활용 가이드
 
-1. **통계 설정**  
-   - `SET STATISTICS IO ON` → **Logical Reads** 확인  
-   - `SET STATISTICS TIME ON` → **Elapsed Time** 확인
-
-2. **Index Scan**  
-   - **개념**: Leaf 페이지를 순차(Full) 스캔  
-   - **키워드**: LEAF Page 순차 검색, 논리적 읽기(높음), 전체 스캔  
-   - **발생 조건**:  
-     - 필터 조건 없음 (`SELECT * FROM TestAccess`)  
-     - `ORDER BY name` + `TOP N` on Non-Clustered Index → 이미 정렬된 NCI를 활용해 효율적  
-
-3. **Index Seek**  
-   - **개념**: B-Tree 탐색으로 해당 키에 바로 점프  
-   - **키워드**: 인덱스 키 탐색, 논리적 읽기(낮음), 특정 값 조회  
-   - **발생 조건**:  
-     - 직접 비교(=) 필터 (`WHERE id = 104`)
-
-4. **Key Lookup**  
-   - **개념**: Non-Clustered Seek 후, 실제 데이터(Clustered) 조회  
-   - **키워드**: Seek + Bookmark Lookup, 추가 페이지 접근  
-   - **발생 조건**:  
-     - Non-Clustered Index on `name` + SELECT * (추가 컬럼 필요)  
-     - 순서:  
-       1. NCI Seek → `name='name5'` 의 Leaf Page (PagePID=9097) 접근  
-       2. 거기서 **Clustered Key(id)** 획득  
-       3. CI B-Tree Seek → Data Page 접근 (PagePID=1001)  
-       4. 해당 슬롯에 있는 행 읽기
-
-5. **사고 흐름 연결 예시**  
-   1. **필터 유무 확인** → Scan vs Seek 판단  
-   2. **Seek 발생 시** → NCI인지 CI인지 확인 → 필요시 Key Lookup  
-   3. **ORDER BY/ TOP N** → 이미 정렬된 인덱스 활용하면 Scan도 효율적  
-   4. **통계 결과** → Logical Reads & Elapsed Time으로 계획 평가  
-
-각 단계에서 위 **키워드**를 떠올리며, “통계 설정 → Scan vs Seek → Key Lookup → 계획 평가” 순으로 머릿속에 그려보세요.  
-
+| 구분     | Index Scan                                             | Index Seek                                                        |
+| ------ | ------------------------------------------------------ | ----------------------------------------------------------------- |
+| 정의     | 인덱스(또는 클러스터드 테이블)의 **모든(또는 상당 부분) 페이지**를 순차적으로 읽음      | 인덱스에서 **특정 키 값(범위)** 에 해당하는 페이지만 직접 찾아 읽음                         |
+| URL    | ☑️ 전체 스캔<br>100% 순차 I/O                                | ☑️ 포인트/범위 탐색<br>순차+랜덤 I/O                                         |
+| 적합 상황  | • 결과 행이 많거나 정렬 후 일부 TOP N 조회<br>• 통계상 Scan이 비용이 더 낮을 때 | • 결과 행이 적고, 인덱스 선택도가 높을 때 (선택도(selectivity) 높음)                   |
+| I/O 비용 | 높음 (읽은 페이지 수 ≒ 전체 페이지 수)                               | 낮음 (읽은 페이지 수 ≒ 결과와 키 룩업 수)                                        |
+| 추가 비용  | –                                                      | • NonClustered → **Key Lookup** 발생 가능<br>• Bookmark Lookup 추가 I/O |
