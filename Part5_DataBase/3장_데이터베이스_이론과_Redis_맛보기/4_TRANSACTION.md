@@ -2,7 +2,7 @@
 
 생각보다 매우 대단한(?) 작업이기 때문에 어떻게 동작하는지 간단하게 집고 넘어가보자
 
-![image](https://github.com/user-attachments/assets/8fadb234-75fd-4e56-948f-576158edbcb4)
+![image](https://github.com/user-attachments/assets/99673f99-9391-4ef2-b8bd-37b9e63f53e5)
 
 TRANSACTION의 ACID 특성
 
