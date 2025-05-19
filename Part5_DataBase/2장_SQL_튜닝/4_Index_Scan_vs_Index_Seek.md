@@ -107,6 +107,8 @@ ORDER BY name;
 
 # Index Scan vs Index Seek의 핵심 개념과 활용 가이드
 
+## 1. 기본 개념 정리
+
 | 구분     | Index Scan                                             | Index Seek                                                        |
 | ------ | ------------------------------------------------------ | ----------------------------------------------------------------- |
 | 정의     | 인덱스(또는 클러스터드 테이블)의 **모든(또는 상당 부분) 페이지**를 순차적으로 읽음      | 인덱스에서 **특정 키 값(범위)** 에 해당하는 페이지만 직접 찾아 읽음                         |
@@ -114,3 +116,75 @@ ORDER BY name;
 | 적합 상황  | • 결과 행이 많거나 정렬 후 일부 TOP N 조회<br>• 통계상 Scan이 비용이 더 낮을 때 | • 결과 행이 적고, 인덱스 선택도가 높을 때 (선택도(selectivity) 높음)                   |
 | I/O 비용 | 높음 (읽은 페이지 수 ≒ 전체 페이지 수)                               | 낮음 (읽은 페이지 수 ≒ 결과와 키 룩업 수)                                        |
 | 추가 비용  | –                                                      | • NonClustered → **Key Lookup** 발생 가능<br>• Bookmark Lookup 추가 I/O |
+
+## 2. 언제 Scan, 언제 Seek?
+- 2.1 Index Scan
+  - 전체 읽기가 빠른 경우
+    - 작은 테이블, 또는 ORDER BY … TOP N 처럼 정렬된 Leaf에서 바로 일부 읽을 때
+
+  - 통계상 비용이 더 낮은 경우
+    - 옵티마이저가 io cost·cpu cost 비교 결과 Scan 선택
+
+  - 인덱스 선택도가 낮을 때
+    - WHERE 조건이 포괄적(예: Age > 0), 결과 행이 많음
+      
+- 2.2 Index Seek
+  - 선택도가 높은 조건
+    - WHERE id = ?, WHERE name = 'XYZ' 같은 고유(또는 좁은 범위) 검색
+  - 범위 검색
+    - BETWEEN, >= 등으로 특정 구간만 읽을 때
+  - 대용량 테이블
+    - 전체 스캔 비용이 클 때 포인트 접근으로 I/O 절감
+
+## 3. 비용(Statistics & Cost) 이해
+- 논리적 읽기(Logical Reads)
+  - 읽은 페이지 수. Scan은 전체 페이지, Seek는 결과+키룩업만.
+  - 물리적 읽기(Physical Reads)
+  - 메모리에 없는 페이지를 디스크에서 읽을 때.
+- CPU 시간
+  - Scan은 순차 처리지만, Seek+Key Lookup은 랜덤 I/O로 오버헤드 존재.
+- 비용 모델
+  - 옵티마이저가 Estimated I/O Cost + CPU Cost 비교 후 플랜 선택
+
+## 4. Key Lookup(Bookmark Lookup) 고려사항
+- 발생 조건
+  - NonClustered Seek 후, 출력 컬럼이 인덱스에 없을 때
+- 해결책
+  - Covered Index: INCLUDE로 필요한 모든 컬럼 포함
+  - 클러스터드 인덱스 설계: 출력 컬럼을 PK로 포함
+  - 쿼리 수정: 필요한 컬럼 최소화
+```sql
+-- 예: Key Lookup 제거를 위한 COVERED INDEX
+CREATE NONCLUSTERED INDEX IX_Cov
+  ON TestAccess(name)
+  INCLUDE (dummy);
+```
+## 5. 최적화 전략
+1. 통계(Statistics) 최신화
+   - UPDATE STATISTICS로 카드INALITY 예측 정확도 개선
+2. 필터 컬럼 Selectivity 체크
+   - sys.dm_db_index_physical_stats, sys.dm_db_stats_histogram 활용
+3. Covered/Include 인덱스 설계
+4. 쿼리 힌트
+   - 강제 Scan/Seek: OPTION (FORCE ORDER), WITH (INDEX(...))
+   - 주의: 운영환경에서 남용 금지
+5. TOP N + ORDER BY 최적화
+   - 정렬 키로 NonClustered Index 존재 시 Scan + TOP N이 오히려 빠름
+
+## 6. 실전 팁
+- 작은 테이블은 Scan이 더 빠른 경우 다수
+- 빈번한 단건 조회는 Seek + Covered Index
+- 대량 처리 배치는 Scan 후 메모리 정렬이 좋을 수 있음
+- 옵티마이저 플랜 캐시 확인: sys.dm_exec_query_plan
+- 인덱스 남발 경고: DML(Insert/Update/Delete) 성능 저하 고려
+
+## 7. 요약 및 결론
+- Index Scan
+  - 전체(또는 대량) 페이지 순차 스캔 → 정렬+TOP N에 강점
+
+- Index Seek
+  - 포인트/범위 탐색 → 선택도 높은 검색에 최적
+
+- Key Lookup 비용 관리**: Covered/Include 인덱스 활용
+- 통계 기반 비용 모델 이해 → 실행 계획 분석 필수
+- 운영 환경 테스트: 실제 I/O·CPU 프로파일링으로 최적화 검증
