@@ -17,7 +17,7 @@ FROM batting
 ORDER BY playerID, yearID; 
 
 -- 3) GROUP BY
--- 원인) 집게를 하기 위해 정렬을 먼저 실행
+-- 원인) 집계를 하기 위해 정렬을 먼저 실행
 SELECT college, COUNT(college)
 FROM players
 WHERE college LIKE 'C%'
@@ -54,6 +54,7 @@ WHERE college LIKE 'C%';
 SELECT ROW_NUMBER() OVER (ORDER BY college)
 FROM players;
 
+-- 인덱스를 활용하면 sort가 사라진것을 알수 있다
 SELECT ROW_NUMBER() OVER (ORDER BY playerId)
 FROM players;
 
@@ -74,7 +75,57 @@ FROM players;
 -- 5) UNION
 -- 6) RANKING WINDOWS FUNCTION
 -- 7) MIN MAX
+-- 8) 인덱스가 없어서 정렬된 데이터가 없었을 경우
 
--- INDEX를 잘 활용하면, Sorting을 굳이 하지 않아도 된다 --
+-- INDEX를 잘 활용하면, Sorting을 굳이 하지 않아도 된다 
 -- 또는 Sorting 자체가 정말 필요한지 고민을 해봐야 한다.
 ```
+## 정렬(Sort) 발생 주요 원인
+- **SORT MERGE JOIN**  
+  - Merge 조인 전 양쪽 테이블 정렬  
+- **ORDER BY**  
+  - 지정된 컬럼 순서대로 결과 정렬  
+- **GROUP BY**  
+  - 집계 전 그룹별 정렬  
+- **DISTINCT**  
+  - 중복 제거를 위한 정렬  
+- **UNION**  
+  - 중복 제거 시 정렬  
+  - 중복 없으면 `UNION ALL` 사용해 정렬 생략 가능  
+- **윈도우 함수 (ROW_NUMBER, RANK 등)**  
+  - 순위 계산 전 정렬  
+- **MIN / MAX**  
+  - 인덱스 없으면 정렬 수행  
+- **인덱스 부재**  
+  - 사전 정렬된 데이터 없으면 임시 정렬 발생  
+
+---
+
+## 인덱스 활용으로 정렬 회피
+- **정렬 키에 클러스터드/논클러스터드 인덱스 존재**  
+  - 인덱스 순서대로 이미 정렬된 데이터 사용 → Sort 연산 생략  
+- **`UNION ALL` 사용**  
+  - 중복 없으면 정렬 없이 결과 합병  
+- **조인 전략 변경**  
+  - Merge Join 대신 Hash/Nested Loop 등으로 Sort 비용 회피  
+
+---
+
+## 최적화 팁
+1. **정렬 구문 검토** → 불필요한 `ORDER BY`·`DISTINCT` 제거  
+2. **인덱스 커버링**  
+   ```sql
+   CREATE INDEX IX_Covered
+     ON 테이블(정렬컬럼)
+     INCLUDE(출력컬럼…);
+   ```
+3. UNION ALL 활용 → 중복 없으면 정렬 제거
+4. 메모리/디스크 I/O 고려
+   - 대량 데이터 정렬 시 버퍼 풀·디스크 스페이스 확인
+5. 실행 계획 확인
+   - Sort (Top N) 연산 아이콘 식별
+
+## 결론
+- 정렬은 O(N·logN) → 대규모 데이터에서 비용 급증
+- 정렬 발생 원인을 정확히 파악하고,
+- 인덱스 활용 또는 쿼리 리팩토링으로 Sort 연산을 최소화하여 성능 최적화
